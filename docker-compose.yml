@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: us-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: postgres
+    ports:
+      - 5433:5432
+  redis:
+    image: redis/redis-stack:7.4.0-v8
+    container_name: us-redis
+    ports:
+      - 6379:6379
