@@ -1,8 +1,8 @@
 package com.sparta.userservice.global.config;
 
+import com.sparta.userservice.global.security.jwt.JwtProvider;
 import com.sparta.userservice.global.security.jwt.filter.JwtAuthenticationFilter;
 import com.sparta.userservice.global.security.jwt.filter.JwtAuthorizationFilter;
-import com.sparta.userservice.global.security.jwt.JwtProvider;
 import com.sparta.userservice.global.security.jwt.user.UserDetailsServiceImpl;
 import com.sparta.userservice.service.TokenRedisService;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +49,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthorizationFilter jwtAuthorizationFilter() {
-        return new JwtAuthorizationFilter(jwtProvider, tokenRedisService, userDetailsService);
+        return new JwtAuthorizationFilter(jwtProvider, userDetailsService);
     }
 
     @Bean

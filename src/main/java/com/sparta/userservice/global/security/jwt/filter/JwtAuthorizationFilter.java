@@ -3,7 +3,6 @@ package com.sparta.userservice.global.security.jwt.filter;
 import com.sparta.userservice.global.security.jwt.JwtProvider;
 import com.sparta.userservice.global.security.jwt.user.UserDetailsImpl;
 import com.sparta.userservice.global.security.jwt.user.UserDetailsServiceImpl;
-import com.sparta.userservice.service.TokenRedisService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,7 +28,6 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
-    private final TokenRedisService tokenRedisService;
     private final UserDetailsServiceImpl userDetailsService;
 
     private static final String AUTHORIZATION_HEADER = AUTHORIZATION;
@@ -39,29 +37,21 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
     ) throws ServletException, IOException {
-        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
+        String token = resolveToken(request);
 
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
-            String accessToken = bearerToken.substring(BEARER_PREFIX.length());
+        if (StringUtils.hasText(token) && jwtProvider.validateToken(token)) {
+            Claims claims = jwtProvider.parseToken(token);
 
-            boolean isBlacklisted = tokenRedisService.isBlacklisted(accessToken);
-            if (StringUtils.hasText(accessToken) && isBlacklisted) {
-                Claims claims = jwtProvider.validateToken(accessToken);
+            String username = claims.get("preferred_username", String.class);
+            UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
 
-                String userId = claims.getSubject();
-                if (StringUtils.hasText(userId)) return;
-                if (SecurityContextHolder.getContext().getAuthentication() != null) return;
+            UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(userId);
-
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            }
-
+            SecurityContextHolder.getContext().setAuthentication(auth);
         }
+
         filterChain.doFilter(request, response);
     }
 
@@ -72,5 +62,16 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                 path.startsWith("/v1/auth/") ||
                 path.startsWith("/swagger") ||
                 path.startsWith("/v3/api-docs");
+    }
+
+    // =========================== 유틸 메서드 ===========================
+
+    private String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
+            return bearerToken.substring(BEARER_PREFIX.length());
+        }
+
+        return null;
     }
 }

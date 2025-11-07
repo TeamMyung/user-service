@@ -1,6 +1,6 @@
 package com.sparta.userservice.global.security.jwt;
 
-import com.sparta.userservice.domain.UserRole;
+import com.sparta.userservice.domain.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -24,7 +24,10 @@ public class JwtProvider {
     private final Duration ACCESS_TOKEN_VALIDITY_DURATION = Duration.ofMinutes(15);
     private final Duration REFRESH_TOKEN_VALIDITY_DURATION = Duration.ofDays(14);
 
+    public static final String CLAIM_PREFERRED_USERNAME = "preferred_username";
     public static final String CLAIM_ROLE = "role";
+    public static final String CLAIM_HUB_ID = "hub_id";
+    public static final String CLAIM_VENDOR_ID = "vendor_id";
     public static final String TOKEN_TYPE = "token_type";
 
     @Value("${jwt.issuer}")
@@ -41,15 +44,18 @@ public class JwtProvider {
         );
     }
 
-    public String createAccessToken(String username, UserRole role) {
+    public String createAccessToken(User user) {
         Instant now = Instant.now();
         String ati = createRandomUuid();
 
         return Jwts.builder()
                 .issuer(issuer)
-                .subject(username)
+                .subject(String.valueOf(user.getUserId()))
                 .id(ati)
-                .claim(CLAIM_ROLE, role.name())
+                .claim(CLAIM_PREFERRED_USERNAME, user.getUsername())
+                .claim(CLAIM_ROLE, user.getRole().name())
+                .claim(CLAIM_HUB_ID, user.getHubId())
+                .claim(CLAIM_VENDOR_ID, user.getVendorId())
                 .claim(TOKEN_TYPE, "access")
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(ACCESS_TOKEN_VALIDITY_DURATION)))
@@ -57,13 +63,12 @@ public class JwtProvider {
                 .compact();
     }
 
-    public String createRefreshToken(String username) {
+    public String createRefreshToken() {
         Instant now = Instant.now();
         String rti = createRandomUuid();
 
         return Jwts.builder()
                 .issuer(issuer)
-                .subject(username)
                 .id(rti)
                 .claim(TOKEN_TYPE, "refresh")
                 .issuedAt(Date.from(now))
@@ -81,9 +86,9 @@ public class JwtProvider {
                 .getPayload();
     }
 
-    public Claims validateToken(String token) {
+    public boolean validateToken(String token) {
         try {
-            return parseToken(token);
+            return true;
         } catch (SecurityException | MalformedJwtException e) {
             log.error("유효하지 않는 토큰입니다.: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
@@ -93,7 +98,7 @@ public class JwtProvider {
         } catch (IllegalArgumentException e) {
             log.error("잘못된 토큰입니다.: {}", e.getMessage());
         }
-        return null;
+        return false;
     }
 
     private String createRandomUuid() {
