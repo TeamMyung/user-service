@@ -55,4 +55,10 @@ public class User extends BaseEntity {
     public void assignVendorId(UUID vendorId) {
         this.vendorId = vendorId;
     }
+
+    private boolean isDeliveryManager = false;
+
+    public void assignAsDeliveryManager() {
+        isDeliveryManager = true;
+    }
 }
