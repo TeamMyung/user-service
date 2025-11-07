@@ -2,7 +2,9 @@ package com.sparta.userservice.service;
 
 import com.sparta.userservice.domain.deliverymanager.DeliveryManager;
 import com.sparta.userservice.domain.user.User;
+import com.sparta.userservice.dto.request.FindIdReqDto;
 import com.sparta.userservice.dto.request.SignUpReqDto;
+import com.sparta.userservice.dto.response.FindIdResDto;
 import com.sparta.userservice.global.exception.AuthException;
 import com.sparta.userservice.repository.DeliveryManagerRepository;
 import com.sparta.userservice.repository.UserRepository;
@@ -89,6 +91,22 @@ public class AuthService {
                 }
             }
         }
+    }
+
+    public FindIdResDto findId(FindIdReqDto requestDto) {
+        String email = requestDto.getEmail().trim();
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> {
+                    log.error("이메일이 일치하는 회원 없음: email={}", email);
+                    return new AuthException(AUTH_USER_NOT_FOUND);
+                });
+
+        if (!user.getName().equals(requestDto.getName())) {
+            log.error("회원 정보가 일치하지 않음");
+            throw new AuthException(AUTH_USER_DATA_MISMATCH);
+        }
+
+        return new FindIdResDto(user.getUsername());
     }
 
 // =============================== 유틸 메서드 ===============================

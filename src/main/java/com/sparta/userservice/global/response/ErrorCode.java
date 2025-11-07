@@ -21,6 +21,7 @@ public enum ErrorCode {
     AUTH_HUB_ID_REQUIRED(1010, HttpStatus.BAD_REQUEST, "허브 아이디가 누락 되었습니다."),
     AUTH_VENDOR_ID_REQUIRED(1011, HttpStatus.BAD_REQUEST, "업체 아이디가 누락 되었습니다."),
     AUTH_DELIVERY_TYPE_REQUIRED(1012, HttpStatus.BAD_REQUEST, "배달 담당자 유형이 누락 되었습니다."),
+    AUTH_USER_DATA_MISMATCH(1013, HttpStatus.BAD_REQUEST, "회원 정보가 일치하지 않습니다.")
 
     ;
 
