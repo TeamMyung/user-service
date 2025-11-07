@@ -45,5 +45,14 @@ public class User extends BaseEntity {
     private String slackAccountId;
 
     private UUID hubId;
+
+    public void assignHubId(UUID hubId) {
+        this.hubId = hubId;
+    }
+
     private UUID vendorId;
+
+    public void assignVendorId(UUID vendorId) {
+        this.vendorId = vendorId;
+    }
 }

@@ -1,14 +1,19 @@
 package com.sparta.userservice.service;
 
+import com.sparta.userservice.domain.deliverymanager.DeliveryManager;
+import com.sparta.userservice.domain.deliverymanager.DeliveryType;
 import com.sparta.userservice.domain.user.User;
 import com.sparta.userservice.dto.request.SignUpReqDto;
 import com.sparta.userservice.global.exception.AuthException;
+import com.sparta.userservice.repository.DeliveryManagerRepository;
 import com.sparta.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 import static com.sparta.userservice.domain.user.UserStatus.PENDING;
 import static com.sparta.userservice.global.response.ErrorCode.*;
@@ -20,6 +25,7 @@ import static com.sparta.userservice.global.response.ErrorCode.*;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final DeliveryManagerRepository deliveryManagerRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -46,9 +52,7 @@ public class AuthService {
             throw new AuthException(AUTH_PASSWORD_MISMATCH);
         }
 
-        // 4. 추후 권한 관련 로직 추가, 승인 대기중 화면으로 이동
-
-        userRepository.save(User.builder()
+        User user = userRepository.save(User.builder()
                 .username(username)
                 .password(passwordEncoder.encode(requestDto.getPassword()))
                 .name(requestDto.getName())
@@ -58,8 +62,58 @@ public class AuthService {
                 .slackAccountId(requestDto.getSlackAccountId())
                 .build()
         );
+
+        // 4. 권한 확인
+        UUID hubId = requestDto.getHubId();
+        switch (user.getRole()) {
+            case HUB_MANAGER -> {
+                validateHubId(requestDto);
+                user.assignHubId(hubId);
+            }
+            case VENDOR_MANAGER -> {
+                validateVendorId(requestDto);
+                user.assignVendorId(requestDto.getVendorId());
+            }
+            case DELIVERY_MANAGER -> {
+                validateDeliveryType(requestDto);
+
+                DeliveryManager deliveryManager = deliveryManagerRepository.save(
+                        DeliveryManager.builder()
+                                .user(user)
+                                .type(requestDto.getDeliveryType())
+                                .build()
+                );
+
+                if (deliveryManager.getType().equals(DeliveryType.HUB_TO_VENDOR)) {
+                    validateHubId(requestDto);
+
+                    user.assignHubId(hubId);
+                    deliveryManager.assignHubId(hubId);
+                }
+            }
+        }
     }
 
 // =============================== 유틸 메서드 ===============================
 
+    private void validateHubId(SignUpReqDto requestDto) {
+        if (requestDto.getHubId() == null) {
+            log.error("허브 아이디 누락");
+            throw new AuthException(AUTH_HUB_ID_REQUIRED);
+        }
+    }
+
+    private void validateVendorId(SignUpReqDto requestDto) {
+        if (requestDto.getVendorId() == null) {
+            log.error("업체 아이디 누락");
+            throw new AuthException(AUTH_VENDOR_ID_REQUIRED);
+        }
+    }
+
+    private void validateDeliveryType(SignUpReqDto requestDto) {
+        if (requestDto.getDeliveryType() == null) {
+            log.error("배달 담당자 유형 누락");
+            throw new AuthException(AUTH_DELIVERY_TYPE_REQUIRED);
+        }
+    }
 }

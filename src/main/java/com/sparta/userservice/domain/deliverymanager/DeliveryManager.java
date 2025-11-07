@@ -2,9 +2,14 @@ package com.sparta.userservice.domain.deliverymanager;
 
 import com.sparta.userservice.domain.user.User;
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.util.UUID;
 
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "p_delivery_managers")
 public class DeliveryManager {
@@ -18,8 +23,13 @@ public class DeliveryManager {
     private User user;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private DeliveryType type;
 
     private UUID hubId;
+    public void assignHubId(UUID hubId) {
+        this.hubId = hubId;
+    }
+
     private Integer serialNumber;
 }
