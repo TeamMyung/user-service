@@ -17,7 +17,10 @@ import java.util.UUID;
 public class User extends BaseEntity {
 
     @Id
-    @Column(name = "user_id", length = 10)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long userId;
+
+    @Column(nullable = false, length = 10)
     private String username;
 
     @Column(nullable = false, length = 100)

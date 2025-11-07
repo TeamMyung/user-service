@@ -30,7 +30,7 @@ public class AuthService {
     public void signUp(SignUpReqDto requestDto) {
         // 1. 아이디 중복 확인
         String username = requestDto.getUsername().trim();
-        if (userRepository.existsById(username)) {
+        if (userRepository.existsByUsername(username)) {
             throw new UserException(USER_DUPLICATED_USERNAME);
         }
 
