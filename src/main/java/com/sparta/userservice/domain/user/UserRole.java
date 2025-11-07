@@ -1,4 +1,4 @@
-package com.sparta.userservice.domain;
+package com.sparta.userservice.domain.user;
 
 public enum UserRole {
     MASTER,

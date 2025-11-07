@@ -1,6 +1,6 @@
 package com.sparta.userservice.global.security.jwt;
 
-import com.sparta.userservice.domain.User;
+import com.sparta.userservice.domain.user.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -13,7 +13,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
-import java.util.UUID;
 
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 

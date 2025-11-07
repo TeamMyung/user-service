@@ -1,6 +1,6 @@
 package com.sparta.userservice.service;
 
-import com.sparta.userservice.domain.User;
+import com.sparta.userservice.domain.user.User;
 import com.sparta.userservice.dto.request.SignUpReqDto;
 import com.sparta.userservice.global.exception.AuthException;
 import com.sparta.userservice.repository.UserRepository;
@@ -10,7 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.sparta.userservice.domain.UserStatus.PENDING;
+import static com.sparta.userservice.domain.user.UserStatus.PENDING;
 import static com.sparta.userservice.global.response.ErrorCode.*;
 
 @Slf4j
