@@ -1,7 +1,7 @@
 package com.sparta.userservice.global.security.jwt.user;
 
-import com.sparta.userservice.domain.deliverymanager.DeliveryManager;
-import com.sparta.userservice.domain.user.User;
+import com.sparta.userservice.domain.DeliveryManager;
+import com.sparta.userservice.domain.User;
 import com.sparta.userservice.global.exception.AuthException;
 import com.sparta.userservice.repository.DeliveryManagerRepository;
 import com.sparta.userservice.repository.UserRepository;
@@ -12,8 +12,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import static com.sparta.userservice.domain.user.UserRole.DELIVERY_MANAGER;
-import static com.sparta.userservice.domain.user.UserStatus.APPROVE;
+import static com.sparta.userservice.domain.UserRole.DELIVERY_MANAGER;
+import static com.sparta.userservice.domain.UserStatus.APPROVE;
 import static com.sparta.userservice.global.response.ErrorCode.*;
 
 @Slf4j

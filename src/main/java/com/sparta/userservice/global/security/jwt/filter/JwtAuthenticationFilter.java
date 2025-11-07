@@ -1,8 +1,8 @@
 package com.sparta.userservice.global.security.jwt.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sparta.userservice.domain.deliverymanager.DeliveryManager;
-import com.sparta.userservice.domain.user.User;
+import com.sparta.userservice.domain.DeliveryManager;
+import com.sparta.userservice.domain.User;
 import com.sparta.userservice.dto.request.SignInReqDto;
 import com.sparta.userservice.global.exception.AuthException;
 import com.sparta.userservice.global.security.jwt.JwtProvider;

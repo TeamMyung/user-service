@@ -1,4 +1,4 @@
-package com.sparta.userservice.domain.deliverymanager;
+package com.sparta.userservice.domain;
 
 public enum DeliveryType {
 

@@ -1,7 +1,7 @@
 package com.sparta.userservice.dto.request;
 
-import com.sparta.userservice.domain.deliverymanager.DeliveryType;
-import com.sparta.userservice.domain.user.UserRole;
+import com.sparta.userservice.domain.DeliveryType;
+import com.sparta.userservice.domain.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

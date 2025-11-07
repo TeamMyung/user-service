@@ -1,6 +1,5 @@
-package com.sparta.userservice.domain.user;
+package com.sparta.userservice.domain;
 
-import com.sparta.userservice.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

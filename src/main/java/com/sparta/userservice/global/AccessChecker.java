@@ -1,17 +1,17 @@
 package com.sparta.userservice.global;
 
-import com.sparta.userservice.domain.deliverymanager.DeliveryManager;
-import com.sparta.userservice.domain.user.User;
-import com.sparta.userservice.domain.user.UserRole;
+import com.sparta.userservice.domain.DeliveryManager;
+import com.sparta.userservice.domain.User;
+import com.sparta.userservice.domain.UserRole;
 import com.sparta.userservice.global.security.jwt.user.UserDetailsImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-import static com.sparta.userservice.domain.deliverymanager.DeliveryType.HUB_TO_HUB;
-import static com.sparta.userservice.domain.deliverymanager.DeliveryType.HUB_TO_VENDOR;
-import static com.sparta.userservice.domain.user.UserRole.*;
+import static com.sparta.userservice.domain.DeliveryType.HUB_TO_HUB;
+import static com.sparta.userservice.domain.DeliveryType.HUB_TO_VENDOR;
+import static com.sparta.userservice.domain.UserRole.*;
 
 @Component("authz")
 public class AccessChecker {

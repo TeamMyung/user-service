@@ -1,7 +1,7 @@
 package com.sparta.userservice.global.security.jwt;
 
-import com.sparta.userservice.domain.deliverymanager.DeliveryManager;
-import com.sparta.userservice.domain.user.User;
+import com.sparta.userservice.domain.DeliveryManager;
+import com.sparta.userservice.domain.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.Nullable;

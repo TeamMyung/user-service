@@ -1,7 +1,7 @@
 package com.sparta.userservice.global.security.jwt.user;
 
-import com.sparta.userservice.domain.deliverymanager.DeliveryManager;
-import com.sparta.userservice.domain.user.User;
+import com.sparta.userservice.domain.DeliveryManager;
+import com.sparta.userservice.domain.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

@@ -1,6 +1,6 @@
 package com.sparta.userservice.repository;
 
-import com.sparta.userservice.domain.user.User;
+import com.sparta.userservice.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,6 +1,6 @@
 package com.sparta.userservice.repository;
 
-import com.sparta.userservice.domain.deliverymanager.DeliveryManager;
+import com.sparta.userservice.domain.DeliveryManager;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

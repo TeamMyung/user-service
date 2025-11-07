@@ -1,6 +1,5 @@
-package com.sparta.userservice.domain.deliverymanager;
+package com.sparta.userservice.domain;
 
-import com.sparta.userservice.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 

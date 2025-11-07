@@ -1,7 +1,7 @@
 package com.sparta.userservice.service;
 
-import com.sparta.userservice.domain.deliverymanager.DeliveryManager;
-import com.sparta.userservice.domain.user.User;
+import com.sparta.userservice.domain.DeliveryManager;
+import com.sparta.userservice.domain.User;
 import com.sparta.userservice.dto.request.FindIdReqDto;
 import com.sparta.userservice.dto.request.FindPwReqDto;
 import com.sparta.userservice.dto.request.SignUpReqDto;
@@ -18,8 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-import static com.sparta.userservice.domain.deliverymanager.DeliveryType.HUB_TO_VENDOR;
-import static com.sparta.userservice.domain.user.UserStatus.PENDING;
+import static com.sparta.userservice.domain.DeliveryType.HUB_TO_VENDOR;
+import static com.sparta.userservice.domain.UserStatus.PENDING;
 import static com.sparta.userservice.global.response.ErrorCode.*;
 
 @Slf4j
