@@ -1,6 +1,7 @@
 package com.sparta.userservice.global.security.jwt.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sparta.userservice.domain.deliverymanager.DeliveryManager;
 import com.sparta.userservice.domain.user.User;
 import com.sparta.userservice.dto.request.SignInReqDto;
 import com.sparta.userservice.global.security.jwt.JwtProvider;
@@ -62,8 +63,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             FilterChain chain, Authentication authResult
     ) throws IOException, ServletException {
         User user = ((UserDetailsImpl) authResult.getPrincipal()).getUser();
+        DeliveryManager deliveryManager = ((UserDetailsImpl) authResult.getPrincipal()).getDeliveryManager();
 
-        String access = jwtProvider.createAccessToken(user);
+        String access = jwtProvider.createAccessToken(user, deliveryManager);
         String refresh = jwtProvider.createRefreshToken(user.getUserId());
 
         tokenRedisService.saveRefresh(refresh);

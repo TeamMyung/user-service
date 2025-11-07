@@ -1,8 +1,10 @@
 package com.sparta.userservice.global.security.jwt;
 
+import com.sparta.userservice.domain.deliverymanager.DeliveryManager;
 import com.sparta.userservice.domain.user.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +29,7 @@ public class JwtProvider {
     public static final String CLAIM_ROLE = "role";
     public static final String CLAIM_HUB_ID = "hub_id";
     public static final String CLAIM_VENDOR_ID = "vendor_id";
+    public static final String CLAIM_DELIVERY_TYPE = "delivery_type";
     public static final String TOKEN_TYPE = "token_type";
 
     @Value("${jwt.issuer}")
@@ -43,10 +46,10 @@ public class JwtProvider {
         );
     }
 
-    public String createAccessToken(User user) {
+    public String createAccessToken(User user, @Nullable DeliveryManager deliveryManager) {
         Instant now = Instant.now();
 
-        return Jwts.builder()
+        JwtBuilder access = Jwts.builder()
                 .issuer(issuer)
                 .subject(String.valueOf(user.getUserId()))
                 .claim(CLAIM_PREFERRED_USERNAME, user.getUsername())
@@ -56,8 +59,12 @@ public class JwtProvider {
                 .claim(TOKEN_TYPE, "access")
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(ACCESS_TOKEN_VALIDITY_DURATION)))
-                .signWith(secretKey, HS256)
-                .compact();
+                .signWith(secretKey, HS256);
+
+        if (deliveryManager != null)
+            access.claim(CLAIM_DELIVERY_TYPE, deliveryManager.getType().name());
+
+        return access.compact();
     }
 
     public String createRefreshToken(Long userId) {
