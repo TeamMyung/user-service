@@ -46,12 +46,10 @@ public class JwtProvider {
 
     public String createAccessToken(User user) {
         Instant now = Instant.now();
-        String ati = createRandomUuid();
 
         return Jwts.builder()
                 .issuer(issuer)
                 .subject(String.valueOf(user.getUserId()))
-                .id(ati)
                 .claim(CLAIM_PREFERRED_USERNAME, user.getUsername())
                 .claim(CLAIM_ROLE, user.getRole().name())
                 .claim(CLAIM_HUB_ID, user.getHubId())
@@ -63,13 +61,12 @@ public class JwtProvider {
                 .compact();
     }
 
-    public String createRefreshToken() {
+    public String createRefreshToken(Long userId) {
         Instant now = Instant.now();
-        String rti = createRandomUuid();
 
         return Jwts.builder()
                 .issuer(issuer)
-                .id(rti)
+                .subject(String.valueOf(userId))
                 .claim(TOKEN_TYPE, "refresh")
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(REFRESH_TOKEN_VALIDITY_DURATION)))
@@ -77,31 +74,26 @@ public class JwtProvider {
                 .compact();
     }
 
-    public Claims parseToken(String token) {
-        return Jwts.parser()
-                .requireIssuer(issuer)
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
-
-    public boolean validateToken(String token) {
+    public Claims validateAndParse(String token) {
         try {
-            return true;
+            return Jwts.parser()
+                    .requireIssuer(issuer)
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
         } catch (SecurityException | MalformedJwtException e) {
             log.error("유효하지 않는 토큰입니다.: {}", e.getMessage());
+            throw e;
         } catch (ExpiredJwtException e) {
             log.error("만료된 토큰입니다.: {}", e.getMessage());
+            throw e;
         } catch (UnsupportedJwtException e) {
             log.error("지원하지 않는 토큰입니다.: {}", e.getMessage());
+            throw e;
         } catch (IllegalArgumentException e) {
             log.error("잘못된 토큰입니다.: {}", e.getMessage());
+            throw e;
         }
-        return false;
-    }
-
-    private String createRandomUuid() {
-        return UUID.randomUUID().toString();
     }
 }

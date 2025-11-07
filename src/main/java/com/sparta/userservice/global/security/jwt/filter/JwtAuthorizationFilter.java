@@ -1,5 +1,6 @@
 package com.sparta.userservice.global.security.jwt.filter;
 
+import com.sparta.userservice.global.exception.AuthException;
 import com.sparta.userservice.global.security.jwt.JwtProvider;
 import com.sparta.userservice.global.security.jwt.user.UserDetailsImpl;
 import com.sparta.userservice.global.security.jwt.user.UserDetailsServiceImpl;
@@ -19,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+import static com.sparta.userservice.global.response.ErrorCode.AUTH_NOT_ACCESS_TOKEN;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 
@@ -39,17 +41,24 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         String token = resolveToken(request);
 
-        if (StringUtils.hasText(token) && jwtProvider.validateToken(token)) {
-            Claims claims = jwtProvider.parseToken(token);
+        if (StringUtils.hasText(token)) {
+            Claims claims = jwtProvider.validateAndParse(token);
+
+            if (!"access".equals(claims.get(JwtProvider.TOKEN_TYPE, String.class))) {
+                log.error("엑세스 토큰이 아님");
+                throw new AuthException(AUTH_NOT_ACCESS_TOKEN);
+            }
 
             String username = claims.get("preferred_username", String.class);
-            UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
+            if (StringUtils.hasText(username)) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
 
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-            SecurityContextHolder.getContext().setAuthentication(auth);
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
         }
 
         filterChain.doFilter(request, response);

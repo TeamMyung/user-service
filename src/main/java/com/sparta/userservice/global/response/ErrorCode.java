@@ -16,7 +16,7 @@ public enum ErrorCode {
     AUTH_DUPLICATED_EMAIL(1005, HttpStatus.BAD_REQUEST, "이미 가입된 이메일입니다."),
     AUTH_INVALID_REFRESH_TOKEN(1006, HttpStatus.UNAUTHORIZED, "리프레시 토큰이 유효하지 않습니다."),
     AUTH_PENDING_APPROVAL(1007, HttpStatus.UNAUTHORIZED, "계정이 승인되지 않았습니다."),
-
+    AUTH_NOT_ACCESS_TOKEN(1008, HttpStatus.UNAUTHORIZED, "엑세스 토큰이 아닙니다."),
     ;
 
     private final int code;
