@@ -59,7 +59,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/v1/auth/sign-up", "/v1/auth/sign-in").permitAll()
+                        .requestMatchers("/", "/v1/auth/**").permitAll()
                         .anyRequest().authenticated()
                 );
         http.addFilterBefore(jwtAuthorizationFilter(), JwtAuthenticationFilter.class);

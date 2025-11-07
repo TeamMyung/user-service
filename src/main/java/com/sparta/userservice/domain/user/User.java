@@ -27,6 +27,10 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 100)
     private String password;
 
+    public void updatePassword(String tempPassword) {
+        password = tempPassword;
+    }
+
     @Column(nullable = false, length = 20)
     private String name;
 

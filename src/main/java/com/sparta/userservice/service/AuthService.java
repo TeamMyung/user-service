@@ -3,8 +3,10 @@ package com.sparta.userservice.service;
 import com.sparta.userservice.domain.deliverymanager.DeliveryManager;
 import com.sparta.userservice.domain.user.User;
 import com.sparta.userservice.dto.request.FindIdReqDto;
+import com.sparta.userservice.dto.request.FindPwReqDto;
 import com.sparta.userservice.dto.request.SignUpReqDto;
 import com.sparta.userservice.dto.response.FindIdResDto;
+import com.sparta.userservice.dto.response.FindPwResDto;
 import com.sparta.userservice.global.exception.AuthException;
 import com.sparta.userservice.repository.DeliveryManagerRepository;
 import com.sparta.userservice.repository.UserRepository;
@@ -101,12 +103,35 @@ public class AuthService {
                     return new AuthException(AUTH_USER_NOT_FOUND);
                 });
 
-        if (!user.getName().equals(requestDto.getName())) {
-            log.error("회원 정보가 일치하지 않음");
+        String name = requestDto.getName();
+        if (!user.getName().equals(name)) {
+            log.error("회원 정보가 일치하지 않음: name={}", name);
             throw new AuthException(AUTH_USER_DATA_MISMATCH);
         }
 
         return new FindIdResDto(user.getUsername());
+    }
+
+    @Transactional
+    public FindPwResDto findPw(FindPwReqDto requestDto) {
+        String username = requestDto.getUsername();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    log.error("아이디가 일치하는 회원 없음: username={}", username);
+                    throw new AuthException(AUTH_USER_NOT_FOUND);
+                });
+
+        String name = requestDto.getName();
+        String email = requestDto.getEmail();
+        if (!user.getName().equals(name) || !user.getEmail().equals(email)) {
+            log.error("회원 정보가 일치하지 않음: name={}, email={}", name, user.getEmail());
+            throw new AuthException(AUTH_USER_DATA_MISMATCH);
+        }
+
+        String tempPassword = generateTempPassword();
+        user.updatePassword(passwordEncoder.encode(tempPassword));
+
+        return new FindPwResDto(tempPassword);
     }
 
 // =============================== 유틸 메서드 ===============================
@@ -142,5 +167,19 @@ public class AuthService {
             log.error("배달 담당자 유형 누락");
             throw new AuthException(AUTH_DELIVERY_TYPE_REQUIRED);
         }
+    }
+
+    private String generateTempPassword() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+        java.security.SecureRandom random = new java.security.SecureRandom();
+
+        int length = 8 + random.nextInt(8);
+        StringBuilder pw = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            pw.append(chars.charAt(random.nextInt(chars.length())));
+        }
+
+        return pw.toString();
     }
 }

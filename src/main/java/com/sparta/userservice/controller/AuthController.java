@@ -1,9 +1,8 @@
 package com.sparta.userservice.controller;
 
 import com.sparta.userservice.dto.request.FindIdReqDto;
+import com.sparta.userservice.dto.request.FindPwReqDto;
 import com.sparta.userservice.dto.request.SignUpReqDto;
-import com.sparta.userservice.dto.response.FindIdResDto;
-import com.sparta.userservice.global.response.ApiResponse;
 import com.sparta.userservice.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +27,12 @@ public class AuthController {
     }
 
     @PostMapping("/find-id")
-    public ApiResponse<FindIdResDto> findId(@Valid @RequestBody FindIdReqDto requestDto) {
-        return new ApiResponse<>(authService.findId(requestDto));
+    public ResponseEntity<?> findId(@Valid @RequestBody FindIdReqDto requestDto) {
+        return ResponseEntity.ok(authService.findId(requestDto));
+    }
+
+    @PostMapping("/find-pw")
+    public ResponseEntity<?> findPw(@Valid @RequestBody FindPwReqDto requestDto) {
+        return ResponseEntity.ok(authService.findPw(requestDto));
     }
 }
