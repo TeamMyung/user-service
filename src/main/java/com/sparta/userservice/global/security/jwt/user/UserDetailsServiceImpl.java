@@ -29,12 +29,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new AuthException(AUTH_USER_NOT_FOUND));
 
-        if (!user.getStatus().equals(APPROVE)) {
+        if (user.getStatus() != APPROVE) {
             log.error("승인 대기중: status={}", user.getStatus());
             throw new AuthException(AUTH_PENDING_APPROVAL);
         }
 
-        if (user.getRole().equals(DELIVERY_MANAGER)) {
+        if (user.getRole() == DELIVERY_MANAGER) {
             DeliveryManager deliveryManager = deliveryManagerRepository.findById(user.getUserId())
                     .orElseThrow(() -> new AuthException(AUTH_DELIVERY_MANAGER_NOT_FOUND));
 

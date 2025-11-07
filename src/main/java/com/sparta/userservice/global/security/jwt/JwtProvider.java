@@ -30,6 +30,7 @@ public class JwtProvider {
     public static final String CLAIM_HUB_ID = "hub_id";
     public static final String CLAIM_VENDOR_ID = "vendor_id";
     public static final String CLAIM_DELIVERY_TYPE = "delivery_type";
+    public static final String CLAIM_DELIVERY_HUB_ID = "delivery_hub_id";
     public static final String TOKEN_TYPE = "token_type";
 
     @Value("${jwt.issuer}")
@@ -61,8 +62,10 @@ public class JwtProvider {
                 .expiration(Date.from(now.plus(ACCESS_TOKEN_VALIDITY_DURATION)))
                 .signWith(secretKey, HS256);
 
-        if (deliveryManager != null)
+        if (deliveryManager != null) {
             access.claim(CLAIM_DELIVERY_TYPE, deliveryManager.getType().name());
+            access.claim(CLAIM_DELIVERY_HUB_ID, deliveryManager.getHubId());
+        }
 
         return access.compact();
     }

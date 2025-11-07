@@ -1,7 +1,6 @@
 package com.sparta.userservice.service;
 
 import com.sparta.userservice.domain.deliverymanager.DeliveryManager;
-import com.sparta.userservice.domain.deliverymanager.DeliveryType;
 import com.sparta.userservice.domain.user.User;
 import com.sparta.userservice.dto.request.SignUpReqDto;
 import com.sparta.userservice.global.exception.AuthException;
@@ -15,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+import static com.sparta.userservice.domain.deliverymanager.DeliveryType.HUB_TO_VENDOR;
 import static com.sparta.userservice.domain.user.UserStatus.PENDING;
 import static com.sparta.userservice.global.response.ErrorCode.*;
 
@@ -36,15 +36,11 @@ public class AuthService {
     public void signUp(SignUpReqDto requestDto) {
         // 1. 아이디 중복 확인
         String username = requestDto.getUsername().trim();
-        if (userRepository.existsByUsername(username)) {
-            throw new AuthException(AUTH_DUPLICATED_USERNAME);
-        }
+        validateUniqueUsername(username);
 
         // 2. 이메일 중복 확인
         String email = requestDto.getEmail().trim().toLowerCase();
-        if (userRepository.existsByEmail(email)) {
-            throw new AuthException(AUTH_DUPLICATED_EMAIL);
-        }
+        validateUniqueEmail(email);
 
         // 3. 비밀번호 일치 여부 확인
         if (!requestDto.getPassword().equals(requestDto.getConfirmPassword())) {
@@ -77,6 +73,7 @@ public class AuthService {
             case DELIVERY_MANAGER -> {
                 validateDeliveryType(requestDto);
 
+                user.assignAsDeliveryManager();
                 DeliveryManager deliveryManager = deliveryManagerRepository.save(
                         DeliveryManager.builder()
                                 .user(user)
@@ -84,7 +81,7 @@ public class AuthService {
                                 .build()
                 );
 
-                if (deliveryManager.getType().equals(DeliveryType.HUB_TO_VENDOR)) {
+                if (deliveryManager.getType() == HUB_TO_VENDOR) {
                     validateHubId(requestDto);
 
                     user.assignHubId(hubId);
@@ -95,6 +92,18 @@ public class AuthService {
     }
 
 // =============================== 유틸 메서드 ===============================
+
+    private void validateUniqueUsername(String username) {
+        if (userRepository.existsByUsername(username)) {
+            throw new AuthException(AUTH_DUPLICATED_USERNAME);
+        }
+    }
+
+    private void validateUniqueEmail(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new AuthException(AUTH_DUPLICATED_EMAIL);
+        }
+    }
 
     private void validateHubId(SignUpReqDto requestDto) {
         if (requestDto.getHubId() == null) {
