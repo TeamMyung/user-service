@@ -2,7 +2,7 @@ package com.sparta.userservice.service;
 
 import com.sparta.userservice.domain.User;
 import com.sparta.userservice.dto.request.SignUpReqDto;
-import com.sparta.userservice.global.exception.UserException;
+import com.sparta.userservice.global.exception.AuthException;
 import com.sparta.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,22 +31,22 @@ public class AuthService {
         // 1. 아이디 중복 확인
         String username = requestDto.getUsername().trim();
         if (userRepository.existsByUsername(username)) {
-            throw new UserException(USER_DUPLICATED_USERNAME);
+            throw new AuthException(AUTH_DUPLICATED_USERNAME);
         }
 
         // 2. 이메일 중복 확인
         String email = requestDto.getEmail().trim().toLowerCase();
         if (userRepository.existsByEmail(email)) {
-            throw new UserException(USER_DUPLICATED_EMAIL);
+            throw new AuthException(AUTH_DUPLICATED_EMAIL);
         }
 
         // 3. 비밀번호 일치 여부 확인
         if (!requestDto.getPassword().equals(requestDto.getConfirmPassword())) {
             log.error("비밀번호가 일치하지 않음");
-            throw new UserException(USER_PASSWORD_MISMATCH);
+            throw new AuthException(AUTH_PASSWORD_MISMATCH);
         }
 
-        // 4. 추후 권한 관련 로직 추가
+        // 4. 추후 권한 관련 로직 추가, 승인 대기중 화면으로 이동
 
         userRepository.save(User.builder()
                 .username(username)
