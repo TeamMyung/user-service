@@ -5,6 +5,7 @@ import com.sparta.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,10 +18,11 @@ public class UserController {
 
     private final UserService userService;
 
-    // 생성 -> 관리자
     @PostMapping
-    public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserReqDto requestDto) {
-        return ResponseEntity.ok()userService.createUser(requestDto)
+    public ResponseEntity<?> createUser(
+            @Valid @RequestBody CreateUserReqDto requestDto, Authentication auth
+    ) {
+        return ResponseEntity.ok(userService.createUser(requestDto, auth));
     }
 
     // 특정 회원 조회 -> 관리자
