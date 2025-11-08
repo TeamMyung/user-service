@@ -15,6 +15,9 @@ public class UserController {
 
     private final UserService userService;
 
+    /**
+     * 회원 생성 (관리자)
+     */
     @PostMapping
     public ResponseEntity<?> createUser(
             @Valid @RequestBody CreateUserReqDto requestDto, Authentication auth
@@ -22,12 +25,21 @@ public class UserController {
         return ResponseEntity.ok(userService.createUser(requestDto, auth));
     }
 
+    /**
+     * 회원 정보 조회 (관리자)
+     */
     @GetMapping("/{userId}")
     public ResponseEntity<?> getUser(@PathVariable(name = "userId") Long userId, Authentication auth) {
         return ResponseEntity.ok(userService.getUser(userId, auth));
     }
 
-    // 본인 조회 -> 전체
+    /**
+     * 회원 정보 조회 (본인)
+     */
+    @GetMapping("/me")
+    public ResponseEntity<?> getUser(Authentication auth) {
+        return ResponseEntity.ok(userService.getUser(auth));
+    }
 
     // 수정 -> 관리자
 

@@ -7,6 +7,7 @@ import com.sparta.userservice.dto.response.CreateUserResDto;
 import com.sparta.userservice.dto.response.DeliveryManagerDto;
 import com.sparta.userservice.dto.response.GetUserResDto;
 import com.sparta.userservice.global.exception.AuthException;
+import com.sparta.userservice.global.security.jwt.user.UserDetailsImpl;
 import com.sparta.userservice.repository.DeliveryManagerRepository;
 import com.sparta.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -109,6 +110,14 @@ public class UserService {
                     });
             deliveryManagerDto = DeliveryManagerDto.from(deliveryManager);
         }
+
+        return GetUserResDto.from(user, deliveryManagerDto);
+    }
+
+    public GetUserResDto getUser(Authentication auth) {
+        UserDetailsImpl principal = (UserDetailsImpl) auth.getPrincipal();
+        User user = principal.getUser();
+        DeliveryManagerDto deliveryManagerDto = DeliveryManagerDto.from(principal.getDeliveryManager());
 
         return GetUserResDto.from(user, deliveryManagerDto);
     }
