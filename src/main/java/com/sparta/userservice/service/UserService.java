@@ -5,6 +5,7 @@ import com.sparta.userservice.domain.User;
 import com.sparta.userservice.dto.request.CreateUserReqDto;
 import com.sparta.userservice.dto.response.CreateUserResDto;
 import com.sparta.userservice.dto.response.DeliveryManagerDto;
+import com.sparta.userservice.dto.response.GetUserResDto;
 import com.sparta.userservice.global.exception.AuthException;
 import com.sparta.userservice.repository.DeliveryManagerRepository;
 import com.sparta.userservice.repository.UserRepository;
@@ -89,6 +90,27 @@ public class UserService {
         }
 
         return CreateUserResDto.from(user, deliveryManagerDto);
+    }
+
+    @PreAuthorize("hasRole('MASTER')")
+    public GetUserResDto getUser(Long userId, Authentication auth) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.error("회원을 찾을 수 없음: userId={}", userId);
+                    return new AuthException(AUTH_USER_NOT_FOUND);
+                });
+
+        DeliveryManagerDto deliveryManagerDto = null;
+        if (Boolean.TRUE.equals(user.getIsDeliveryManager())) {
+            DeliveryManager deliveryManager = deliveryManagerRepository.findById(user.getUserId())
+                    .orElseThrow(() -> {
+                        log.error("배송 담당자를 찾을 수 없음: deliveryManagerId={}", user.getUserId());
+                        return new AuthException(AUTH_DELIVERY_MANAGER_NOT_FOUND);
+                    });
+            deliveryManagerDto = DeliveryManagerDto.from(deliveryManager);
+        }
+
+        return GetUserResDto.from(user, deliveryManagerDto);
     }
 
     // ============================ 유틸 메서드 ============================

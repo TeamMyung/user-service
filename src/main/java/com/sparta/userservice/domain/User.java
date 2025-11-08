@@ -59,7 +59,7 @@ public class User extends BaseEntity {
         this.vendorId = vendorId;
     }
 
-    private boolean isDeliveryManager = false;
+    private Boolean isDeliveryManager = false;
 
     public void assignAsDeliveryManager() {
         isDeliveryManager = true;

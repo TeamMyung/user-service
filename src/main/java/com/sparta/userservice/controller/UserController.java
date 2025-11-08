@@ -6,10 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,7 +22,10 @@ public class UserController {
         return ResponseEntity.ok(userService.createUser(requestDto, auth));
     }
 
-    // 특정 회원 조회 -> 관리자
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> getUser(@PathVariable(name = "userId") Long userId, Authentication auth) {
+        return ResponseEntity.ok(userService.getUser(userId, auth));
+    }
 
     // 본인 조회 -> 전체
 

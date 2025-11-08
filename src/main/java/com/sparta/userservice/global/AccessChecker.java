@@ -56,7 +56,7 @@ public class AccessChecker {
         User user = resolveUser(auth);
         if (!user.getUserId().equals(deliveryManagerId)) return false;
 
-        if (!user.isDeliveryManager()) return false;
+        if (Boolean.TRUE.equals(user.getIsDeliveryManager())) return false;
 
         DeliveryManager deliveryManager = resolveDeliveryManager(auth);
         if (deliveryManager == null) return false;
