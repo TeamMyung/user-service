@@ -2,10 +2,12 @@ package com.sparta.userservice.global.security.jwt;
 
 import com.sparta.userservice.domain.DeliveryManager;
 import com.sparta.userservice.domain.User;
+import com.sparta.userservice.global.PermissionMapper;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -15,18 +17,23 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtProvider {
+
+    private final PermissionMapper permissionMapper;
 
     private final Duration ACCESS_TOKEN_VALIDITY_DURATION = Duration.ofMinutes(15);
     private final Duration REFRESH_TOKEN_VALIDITY_DURATION = Duration.ofDays(14);
 
     public static final String CLAIM_PREFERRED_USERNAME = "preferred_username";
     public static final String CLAIM_ROLE = "role";
+    public static final String CLAIM_PERMS = "perms";
     public static final String CLAIM_HUB_ID = "hub_id";
     public static final String CLAIM_VENDOR_ID = "vendor_id";
     public static final String CLAIM_DELIVERY_TYPE = "delivery_type";
@@ -49,12 +56,14 @@ public class JwtProvider {
 
     public String createAccessToken(User user, @Nullable DeliveryManager deliveryManager) {
         Instant now = Instant.now();
+        List<String> perms = permissionMapper.permsFor(user.getRole());
 
         JwtBuilder access = Jwts.builder()
                 .issuer(issuer)
                 .subject(String.valueOf(user.getUserId()))
                 .claim(CLAIM_PREFERRED_USERNAME, user.getUsername())
                 .claim(CLAIM_ROLE, user.getRole().name())
+                .claim(CLAIM_PERMS, perms)
                 .claim(CLAIM_HUB_ID, user.getHubId())
                 .claim(CLAIM_VENDOR_ID, user.getVendorId())
                 .claim(TOKEN_TYPE, "access")

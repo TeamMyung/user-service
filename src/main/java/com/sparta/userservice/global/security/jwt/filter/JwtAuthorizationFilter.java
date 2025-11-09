@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.sparta.userservice.global.response.ErrorCode.AUTH_NOT_ACCESS_TOKEN;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -51,10 +56,21 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
             String username = claims.get("preferred_username", String.class);
             if (StringUtils.hasText(username)) {
-                UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
+                UserDetailsImpl userDetails =
+                        (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
+
+                List<?> perms = claims.get(JwtProvider.CLAIM_PERMS, List.class);
+
+                List<GrantedAuthority> authorities =
+                        perms == null
+                                ? Collections.emptyList()
+                                : perms.stream()
+                                .map(Object::toString)
+                                .map(SimpleGrantedAuthority::new)
+                                .collect(Collectors.toList());
 
                 UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                        new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
 
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(auth);
