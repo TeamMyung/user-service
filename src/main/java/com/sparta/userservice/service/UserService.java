@@ -12,7 +12,6 @@ import com.sparta.userservice.dto.response.GetUserResDto;
 import com.sparta.userservice.dto.response.UpdateStatusResDto;
 import com.sparta.userservice.global.exception.AuthException;
 import com.sparta.userservice.global.security.jwt.user.UserDetailsImpl;
-import com.sparta.userservice.global.security.role.UserRoleScope;
 import com.sparta.userservice.repository.DeliveryManagerRepository;
 import com.sparta.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +41,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final DeliveryManagerRepository deliveryManagerRepository;
     private final PasswordEncoder passwordEncoder;
-    private final UserRoleScope userRoleScope;
 
     /**
      * 가입 요청 일괄 승인
