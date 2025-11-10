@@ -39,10 +39,10 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
     ) throws ServletException, IOException {
-        String token = resolveToken(request);
+        String access = resolveToken(request);
 
-        if (StringUtils.hasText(token)) {
-            Claims claims = jwtProvider.validateAndParse(token);
+        if (StringUtils.hasText(access)) {
+            Claims claims = jwtProvider.validateAndParse(access);
 
             String type = claims.get(TOKEN_TYPE, String.class);
             if (!TOKEN_ACCESS.equals(type)) {
@@ -52,7 +52,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             }
 
             // 세션 방식과 유사하기 때문에 인메모리 캐시를 조회하도록 추후 수정
-            if (tokenRedisService.isBlacklisted(BEARER_PREFIX + token)) {
+            if (tokenRedisService.isBlacklisted(access)) {
                 filterChain.doFilter(request, response);
                 return;
             }

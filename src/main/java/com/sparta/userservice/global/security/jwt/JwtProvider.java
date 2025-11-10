@@ -2,7 +2,6 @@ package com.sparta.userservice.global.security.jwt;
 
 import com.sparta.userservice.domain.DeliveryManager;
 import com.sparta.userservice.domain.User;
-import com.sparta.userservice.global.PermissionMapper;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.Nullable;
@@ -17,7 +16,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
-import java.util.List;
 
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 
@@ -26,12 +24,10 @@ import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 @RequiredArgsConstructor
 public class JwtProvider {
 
-    private final PermissionMapper permissionMapper;
-
     private final Duration ACCESS_TOKEN_VALIDITY_DURATION = Duration.ofMinutes(15);
     private final Duration REFRESH_TOKEN_VALIDITY_DURATION = Duration.ofDays(14);
 
-    public static final String CLAIM_USERNAME = "preferred_username";
+    public static final String CLAIM_USERNAME = "username";
     public static final String CLAIM_ROLE = "role";
     public static final String TOKEN_TYPE = "token_type";
     public static final String TOKEN_ACCESS = "access";
@@ -88,16 +84,16 @@ public class JwtProvider {
                     .parseSignedClaims(token)
                     .getPayload();
         } catch (SecurityException | MalformedJwtException e) {
-            log.error("유효하지 않는 토큰입니다.: {}", e.getMessage());
+            log.error("유효하지 않는 토큰: {}", e.getMessage());
             throw e;
         } catch (ExpiredJwtException e) {
-            log.error("만료된 토큰입니다.: {}", e.getMessage());
+            log.error("만료된 토큰: {}", e.getMessage());
             throw e;
         } catch (UnsupportedJwtException e) {
-            log.error("지원하지 않는 토큰입니다.: {}", e.getMessage());
+            log.error("지원하지 않는 토큰: {}", e.getMessage());
             throw e;
         } catch (IllegalArgumentException e) {
-            log.error("잘못된 토큰입니다.: {}", e.getMessage());
+            log.error("잘못된 토큰: {}", e.getMessage());
             throw e;
         }
     }
