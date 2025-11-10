@@ -41,10 +41,17 @@ public class TokenRedisService {
         return Optional.ofNullable(redis.opsForValue().get(KEY_REFRESH + userId));
     }
 
+    /**
+     * 리프래시 토큰 삭제
+     */
+    public void deleteRefresh(String userId) {
+        redis.delete(KEY_REFRESH + userId);
+    }
+
     // ============================== 블랙리스트 ==============================
 
     /**
-     * 엑세스 토큰 블랙리스트 등록
+     * 엑세스 토큰 블랙리스트 등록 (로그아웃)
      */
     public void blackListAccess(String access) {
         Claims claims = jwtProvider.validateAndParse(access);

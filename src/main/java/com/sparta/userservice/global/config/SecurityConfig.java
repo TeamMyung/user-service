@@ -49,7 +49,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthorizationFilter jwtAuthorizationFilter() {
-        return new JwtAuthorizationFilter(jwtProvider, userDetailsService);
+        return new JwtAuthorizationFilter(jwtProvider, userDetailsService, tokenRedisService);
     }
 
     @Bean
