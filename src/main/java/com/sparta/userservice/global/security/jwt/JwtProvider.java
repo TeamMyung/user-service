@@ -31,14 +31,11 @@ public class JwtProvider {
     private final Duration ACCESS_TOKEN_VALIDITY_DURATION = Duration.ofMinutes(15);
     private final Duration REFRESH_TOKEN_VALIDITY_DURATION = Duration.ofDays(14);
 
-    public static final String CLAIM_PREFERRED_USERNAME = "preferred_username";
+    public static final String CLAIM_USERNAME = "preferred_username";
     public static final String CLAIM_ROLE = "role";
-    public static final String CLAIM_PERMS = "perms";
-    public static final String CLAIM_HUB_ID = "hub_id";
-    public static final String CLAIM_VENDOR_ID = "vendor_id";
-    public static final String CLAIM_DELIVERY_TYPE = "delivery_type";
-    public static final String CLAIM_DELIVERY_HUB_ID = "delivery_hub_id";
     public static final String TOKEN_TYPE = "token_type";
+    public static final String TOKEN_ACCESS = "access";
+    public static final String TOKEN_REFRESH = "refresh";
 
     @Value("${jwt.issuer}")
     private String issuer;
@@ -56,27 +53,17 @@ public class JwtProvider {
 
     public String createAccessToken(User user, @Nullable DeliveryManager deliveryManager) {
         Instant now = Instant.now();
-        List<String> perms = permissionMapper.permsFor(user.getRole());
 
-        JwtBuilder access = Jwts.builder()
+        return Jwts.builder()
                 .issuer(issuer)
                 .subject(String.valueOf(user.getUserId()))
-                .claim(CLAIM_PREFERRED_USERNAME, user.getUsername())
+                .claim(CLAIM_USERNAME, user.getUsername())
                 .claim(CLAIM_ROLE, user.getRole().name())
-                .claim(CLAIM_PERMS, perms)
-                .claim(CLAIM_HUB_ID, user.getHubId())
-                .claim(CLAIM_VENDOR_ID, user.getVendorId())
-                .claim(TOKEN_TYPE, "access")
+                .claim(TOKEN_TYPE, TOKEN_ACCESS)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(ACCESS_TOKEN_VALIDITY_DURATION)))
-                .signWith(secretKey, HS256);
-
-        if (deliveryManager != null) {
-            access.claim(CLAIM_DELIVERY_TYPE, deliveryManager.getType().name());
-            access.claim(CLAIM_DELIVERY_HUB_ID, deliveryManager.getHubId());
-        }
-
-        return access.compact();
+                .signWith(secretKey, HS256)
+                .compact();
     }
 
     public String createRefreshToken(Long userId) {
@@ -85,7 +72,7 @@ public class JwtProvider {
         return Jwts.builder()
                 .issuer(issuer)
                 .subject(String.valueOf(userId))
-                .claim(TOKEN_TYPE, "refresh")
+                .claim(TOKEN_TYPE, TOKEN_REFRESH)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(REFRESH_TOKEN_VALIDITY_DURATION)))
                 .signWith(secretKey, HS256)

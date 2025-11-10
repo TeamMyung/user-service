@@ -33,6 +33,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
     private static final String REFRESH_TOKEN_HEADER = "X-Refresh-Token";
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final String EXPOSE_HEADERS = "Access-Control-Expose-Headers";
 
     public JwtAuthenticationFilter(JwtProvider jwtProvider, TokenRedisService tokenRedisService) {
         this.jwtProvider = jwtProvider;
@@ -74,7 +75,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         response.addHeader(AUTHORIZATION_HEADER, BEARER_PREFIX + access);
         response.addHeader(REFRESH_TOKEN_HEADER, refresh);
-        response.addHeader("Access-Control-Expose-Headers", AUTHORIZATION_HEADER + ", " + REFRESH_TOKEN_HEADER);
+        response.addHeader(EXPOSE_HEADERS, AUTHORIZATION_HEADER + ", " + REFRESH_TOKEN_HEADER);
     }
 
     // 로그인 실패
