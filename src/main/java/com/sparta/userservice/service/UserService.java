@@ -2,12 +2,17 @@ package com.sparta.userservice.service;
 
 import com.sparta.userservice.domain.DeliveryManager;
 import com.sparta.userservice.domain.User;
+import com.sparta.userservice.domain.UserStatus;
+import com.sparta.userservice.dto.request.ApproveUsersReqDto;
 import com.sparta.userservice.dto.request.CreateUserReqDto;
+import com.sparta.userservice.dto.request.RejectUsersReqDto;
 import com.sparta.userservice.dto.response.CreateUserResDto;
 import com.sparta.userservice.dto.response.DeliveryManagerDto;
 import com.sparta.userservice.dto.response.GetUserResDto;
+import com.sparta.userservice.dto.response.UpdateStatusResDto;
 import com.sparta.userservice.global.exception.AuthException;
 import com.sparta.userservice.global.security.jwt.user.UserDetailsImpl;
+import com.sparta.userservice.global.security.role.UserRoleScope;
 import com.sparta.userservice.repository.DeliveryManagerRepository;
 import com.sparta.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +23,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.sparta.userservice.domain.DeliveryType.HUB_TO_VENDOR;
 import static com.sparta.userservice.domain.UserStatus.APPROVE;
-import static com.sparta.userservice.domain.UserStatus.REJECT;
 import static com.sparta.userservice.global.response.ErrorCode.*;
 
 @Slf4j
@@ -34,21 +42,29 @@ public class UserService {
     private final UserRepository userRepository;
     private final DeliveryManagerRepository deliveryManagerRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserRoleScope userRoleScope;
 
+    /**
+     * 가입 요청 일괄 승인
+     */
     @Transactional
     @PreAuthorize("hasRole('MASTER')")
-    public void approve(Long userId) {
-        User user = findUserById(userId);
-        user.updateStatus(APPROVE);
+    public UpdateStatusResDto approveUsers(ApproveUsersReqDto requestDto, Authentication auth) {
+        return updateStatus(requestDto.getUserIds(), auth, true);
     }
 
+    /**
+     * 가입 요청 일괄 거절
+     */
     @Transactional
     @PreAuthorize("hasRole('MASTER')")
-    public void reject(Long userId) {
-        User user = findUserById(userId);
-        user.updateStatus(REJECT);
+    public UpdateStatusResDto rejectUsers(RejectUsersReqDto requestDto, Authentication auth) {
+        return updateStatus(requestDto.getUserIds(), auth, false);
     }
 
+    /**
+     * 관리자 - 회원 등록
+     */
     @Transactional
     @PreAuthorize("hasRole('MASTER')")
     public CreateUserResDto createUser(CreateUserReqDto requestDto, Authentication auth) {
@@ -107,7 +123,10 @@ public class UserService {
         return CreateUserResDto.from(user, deliveryManagerDto);
     }
 
-    @PreAuthorize("@policy.canReadUser(#userId, authentication)")
+    /**
+     * 관리자 - 단일 회원 정보 조회
+     */
+    @PreAuthorize("hasRole('MASTER')")
     public GetUserResDto getUser(Long userId, Authentication auth) {
         User user = findUserById(userId);
 
@@ -121,6 +140,9 @@ public class UserService {
         return GetUserResDto.from(user, deliveryManagerDto);
     }
 
+    /**
+     * 회원 - 본인 정보 조회
+     */
     public GetUserResDto getUser(Authentication auth) {
         UserDetailsImpl principal = (UserDetailsImpl) auth.getPrincipal();
         User user = principal.getUser();
@@ -170,5 +192,44 @@ public class UserService {
                     log.error("회원을 찾을 수 없음: userId={}", userId);
                     return new AuthException(AUTH_USER_NOT_FOUND);
                 });
+    }
+
+    private UpdateStatusResDto updateStatus(List<Long> userIds, Authentication auth, boolean approve) {
+        // 1. 중복 제거
+        List<Long> distinctUserIds = userIds.stream().distinct().toList();
+
+        // 2. 회원 조회
+        Map<Long, User> users = userRepository.findAllById(distinctUserIds).stream()
+                .collect(Collectors.toMap(User::getUserId, user -> user));
+
+        List<Long> completed = new ArrayList<>();
+        List<UpdateStatusResDto.Failure> failed = new ArrayList<>();
+
+        for (Long userId : distinctUserIds) {
+            User user = users.get(userId);
+            if (user == null) {
+                failed.add(new UpdateStatusResDto.Failure(userId, AUTH_USER_NOT_FOUND.getDetails()));
+                continue;
+            }
+
+            if (approve && user.getStatus() == APPROVE) {
+                completed.add(userId);
+                continue;
+            }
+            if (!approve && user.getStatus() == UserStatus.REJECT) {
+                completed.add(userId);
+                continue;
+            }
+
+            // 3. 상태 변경
+            if (approve) {
+                user.approve();
+            } else {
+                user.reject();
+            }
+            completed.add(userId);
+        }
+
+        return new UpdateStatusResDto(completed, failed);
     }
 }

@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
+import static com.sparta.userservice.domain.UserStatus.APPROVE;
+import static com.sparta.userservice.domain.UserStatus.REJECT;
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -44,8 +47,12 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 
-    public void updateStatus(UserStatus status) {
-        this.status = status;
+    public void approve() {
+        status = APPROVE;
+    }
+
+    public void reject() {
+        status = REJECT;
     }
 
     @Column(nullable = false, length = 100)

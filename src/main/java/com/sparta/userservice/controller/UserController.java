@@ -1,6 +1,8 @@
 package com.sparta.userservice.controller;
 
+import com.sparta.userservice.dto.request.ApproveUsersReqDto;
 import com.sparta.userservice.dto.request.CreateUserReqDto;
+import com.sparta.userservice.dto.request.RejectUsersReqDto;
 import com.sparta.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,21 +18,19 @@ public class UserController {
     private final UserService userService;
 
     /**
-     * 회원 가입 승인 (단일) -> 일괄 추가
+     * 회원 가입 일괄 승인
      */
-    @PatchMapping("/{userId}/approve")
-    public ResponseEntity<?> approve(@PathVariable(name = "userId") Long userId) {
-        userService.approve(userId);
-        return ResponseEntity.ok().build();
+    @PostMapping("approve")
+    public ResponseEntity<?> approveUsers(@Valid @RequestBody ApproveUsersReqDto requestDto, Authentication auth) {
+        return ResponseEntity.ok(userService.approveUsers(requestDto, auth));
     }
 
     /**
-     * 회원 가입 거절 (단일) -> 일괄 추가
+     * 회원 가입 일괄 거절
      */
-    @PatchMapping("/{userId}/reject")
-    public ResponseEntity<?> reject(@PathVariable(name = "userId") Long userId) {
-        userService.reject(userId);
-        return ResponseEntity.ok().build();
+    @PostMapping("/reject")
+    public ResponseEntity<?> rejectUsers(@Valid @RequestBody RejectUsersReqDto requestDto, Authentication auth) {
+        return ResponseEntity.ok(userService.rejectUsers(requestDto, auth));
     }
 
     /**

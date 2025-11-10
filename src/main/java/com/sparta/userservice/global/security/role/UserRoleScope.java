@@ -6,7 +6,6 @@ import com.sparta.userservice.global.security.jwt.user.UserDetailsImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
-import java.util.Objects;
 import java.util.UUID;
 
 @Component("policy")
@@ -44,10 +43,10 @@ public class UserRoleScope {
 
         return switch (a) {
             case CREATE, UPDATE, DELETE ->
-                    isMaster(me) || (isHubManager(me) && same(me.getHubId(), targetHubId)); // 허브관리자: 담당 허브만
+                    isMaster(me) || (isHubManager(me) && same(me.getHubId(), targetHubId));
             case READ -> isMaster(me)
-                    || (isHubManager(me) && same(me.getHubId(), targetHubId)) // 허브 관리자: 담당 허브
-                    || (isDeliveryManager(me) && isSelf(me, targetUserId));   // 배송 담당자: 본인 정보
+                    || (isHubManager(me) && same(me.getHubId(), targetHubId))
+                    || (isDeliveryManager(me) && isSelf(me, targetUserId));
         };
     }
 
@@ -135,11 +134,6 @@ public class UserRoleScope {
             case CREATE -> isMaster(me) || isHubManager(me) || isDeliveryManager(me) || isVendorManager(me);
             case UPDATE, DELETE, READ -> isMaster(me);
         };
-    }
-
-    public boolean canReadUser(Long targetUserId, Authentication auth) {
-        User me = principal(auth);
-        return me != null && Objects.equals(me.getUserId(), targetUserId);
     }
 
     // ========================= 유틸 메서드 =========================
