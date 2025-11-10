@@ -44,6 +44,10 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 
+    public void updateStatus(UserStatus status) {
+        this.status = status;
+    }
+
     @Column(nullable = false, length = 100)
     private String slackAccountId;
 

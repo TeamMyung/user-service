@@ -5,10 +5,12 @@ import com.sparta.userservice.domain.DeliveryType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class DeliveryManagerDto {
@@ -23,5 +25,9 @@ public class DeliveryManagerDto {
                 .type(deliveryManager.getType())
                 .hubId(deliveryManager.getHubId())
                 .build();
+    }
+
+    public static DeliveryManagerDto empty() {
+        return new DeliveryManagerDto();
     }
 }

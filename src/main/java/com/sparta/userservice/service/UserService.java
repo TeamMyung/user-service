@@ -22,6 +22,7 @@ import java.util.UUID;
 
 import static com.sparta.userservice.domain.DeliveryType.HUB_TO_VENDOR;
 import static com.sparta.userservice.domain.UserStatus.APPROVE;
+import static com.sparta.userservice.domain.UserStatus.REJECT;
 import static com.sparta.userservice.global.response.ErrorCode.*;
 
 @Slf4j
@@ -36,14 +37,27 @@ public class UserService {
 
     @Transactional
     @PreAuthorize("hasRole('MASTER')")
-    public CreateUserResDto createUser(CreateUserReqDto requestDto, Authentication auth) {
-        // 1. 아이디 중복 확인
-        String username = requestDto.getUsername();
-        validateUniqueUsername(username);
+    public void approve(Long userId) {
+        User user = findUserById(userId);
+        user.updateStatus(APPROVE);
+    }
 
-        // 2. 이메일 중복 확인
-        String email = requestDto.getEmail();
-        validateUniqueEmail(email);
+    @Transactional
+    @PreAuthorize("hasRole('MASTER')")
+    public void reject(Long userId) {
+        User user = findUserById(userId);
+        user.updateStatus(REJECT);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('MASTER')")
+    public CreateUserResDto createUser(CreateUserReqDto requestDto, Authentication auth) {
+        // 1. 중복 확인
+        String username = requestDto.getUsername().trim();
+        String email = requestDto.getEmail().trim().toLowerCase();
+
+        validateUniqueUsername(requestDto.getUsername().trim());
+        validateUniqueEmail(requestDto.getEmail().trim());
 
         User user = userRepository.save(User.builder()
                 .username(username)
@@ -57,59 +71,52 @@ public class UserService {
         );
 
         // 4. 권한 확인
-        DeliveryManagerDto deliveryManagerDto = null;
         UUID hubId = requestDto.getHubId();
         switch (user.getRole()) {
             case HUB_MANAGER -> {
-                validateHubId(requestDto);
+                requireHubId(requestDto);
                 user.assignHubId(hubId);
             }
             case VENDOR_MANAGER -> {
-                validateVendorId(requestDto);
+                requireVendorId(requestDto);
                 user.assignVendorId(requestDto.getVendorId());
             }
             case DELIVERY_MANAGER -> {
-                validateDeliveryType(requestDto);
-
+                requireDeliveryType(requestDto);
                 user.assignAsDeliveryManager();
-                DeliveryManager deliveryManager = deliveryManagerRepository.save(
-                        DeliveryManager.builder()
-                                .user(user)
-                                .type(requestDto.getDeliveryType())
-                                .build()
-                );
 
-                if (deliveryManager.getType() == HUB_TO_VENDOR) {
-                    validateHubId(requestDto);
-
+                if (requestDto.getDeliveryType() == HUB_TO_VENDOR) {
+                    requireHubId(requestDto);
                     user.assignHubId(hubId);
-                    deliveryManager.assignHubId(hubId);
                 }
-
-                deliveryManagerDto = DeliveryManagerDto.from(deliveryManager);
             }
+        }
+
+        DeliveryManagerDto deliveryManagerDto = null;
+        if (user.getIsDeliveryManager()) {
+            DeliveryManager deliveryManager = deliveryManagerRepository.save(
+                    DeliveryManager.builder()
+                            .user(user)
+                            .type(requestDto.getDeliveryType())
+                            .hubId(user.getHubId())
+                            .build()
+            );
+            deliveryManagerDto = DeliveryManagerDto.from(deliveryManager);
         }
 
         return CreateUserResDto.from(user, deliveryManagerDto);
     }
 
-    @PreAuthorize("hasRole('MASTER')")
+    @PreAuthorize("@policy.canReadUser(#userId, authentication)")
     public GetUserResDto getUser(Long userId, Authentication auth) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    log.error("회원을 찾을 수 없음: userId={}", userId);
-                    return new AuthException(AUTH_USER_NOT_FOUND);
-                });
+        User user = findUserById(userId);
 
-        DeliveryManagerDto deliveryManagerDto = null;
-        if (Boolean.TRUE.equals(user.getIsDeliveryManager())) {
-            DeliveryManager deliveryManager = deliveryManagerRepository.findById(user.getUserId())
-                    .orElseThrow(() -> {
-                        log.error("배송 담당자를 찾을 수 없음: deliveryManagerId={}", user.getUserId());
-                        return new AuthException(AUTH_DELIVERY_MANAGER_NOT_FOUND);
-                    });
-            deliveryManagerDto = DeliveryManagerDto.from(deliveryManager);
-        }
+        DeliveryManagerDto deliveryManagerDto = deliveryManagerRepository.findById(user.getUserId())
+                .map(DeliveryManagerDto::from)
+                .orElseGet(() -> {
+                    log.warn("일치하는 배송 담당자 정보를 찾을 수 없음: userId={}", user.getUserId());
+                    return DeliveryManagerDto.empty();
+                });
 
         return GetUserResDto.from(user, deliveryManagerDto);
     }
@@ -136,24 +143,32 @@ public class UserService {
         }
     }
 
-    private void validateHubId(CreateUserReqDto requestDto) {
+    private void requireHubId(CreateUserReqDto requestDto) {
         if (requestDto.getHubId() == null) {
             log.error("허브 아이디 누락");
             throw new AuthException(AUTH_HUB_ID_REQUIRED);
         }
     }
 
-    private void validateVendorId(CreateUserReqDto requestDto) {
+    private void requireVendorId(CreateUserReqDto requestDto) {
         if (requestDto.getVendorId() == null) {
             log.error("업체 아이디 누락");
             throw new AuthException(AUTH_VENDOR_ID_REQUIRED);
         }
     }
 
-    private void validateDeliveryType(CreateUserReqDto requestDto) {
+    private void requireDeliveryType(CreateUserReqDto requestDto) {
         if (requestDto.getDeliveryType() == null) {
             log.error("배달 담당자 유형 누락");
             throw new AuthException(AUTH_DELIVERY_TYPE_REQUIRED);
         }
+    }
+
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.error("회원을 찾을 수 없음: userId={}", userId);
+                    return new AuthException(AUTH_USER_NOT_FOUND);
+                });
     }
 }

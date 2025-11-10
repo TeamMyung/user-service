@@ -16,6 +16,24 @@ public class UserController {
     private final UserService userService;
 
     /**
+     * 회원 가입 승인 (단일) -> 일괄 추가
+     */
+    @PatchMapping("/{userId}/approve")
+    public ResponseEntity<?> approve(@PathVariable(name = "userId") Long userId) {
+        userService.approve(userId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 회원 가입 거절 (단일) -> 일괄 추가
+     */
+    @PatchMapping("/{userId}/reject")
+    public ResponseEntity<?> reject(@PathVariable(name = "userId") Long userId) {
+        userService.reject(userId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * 회원 생성 (관리자)
      */
     @PostMapping
