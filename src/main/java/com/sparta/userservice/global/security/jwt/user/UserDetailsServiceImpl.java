@@ -34,7 +34,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new AuthException(AUTH_PENDING_APPROVAL);
         }
 
-        if (user.getRole() == DELIVERY_MANAGER) {
+        if (user.getRole() == DELIVERY_MANAGER && Boolean.TRUE.equals(user.getIsDeliveryManager())) {
             DeliveryManager deliveryManager = deliveryManagerRepository.findById(user.getUserId())
                     .orElseThrow(() -> new AuthException(AUTH_DELIVERY_MANAGER_NOT_FOUND));
 
