@@ -3,6 +3,10 @@ package com.sparta.userservice.controller;
 import com.sparta.userservice.dto.request.ApproveUsersReqDto;
 import com.sparta.userservice.dto.request.CreateUserReqDto;
 import com.sparta.userservice.dto.request.RejectUsersReqDto;
+import com.sparta.userservice.dto.response.CreateUserResDto;
+import com.sparta.userservice.dto.response.GetSlackAccountIdResDto;
+import com.sparta.userservice.dto.response.GetUserResDto;
+import com.sparta.userservice.global.response.ApiResponse;
 import com.sparta.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,30 +41,36 @@ public class UserController {
      * 회원 생성 (관리자)
      */
     @PostMapping
-    public ResponseEntity<?> createUser(
+    public ApiResponse<CreateUserResDto> createUser(
             @Valid @RequestBody CreateUserReqDto requestDto, Authentication auth
     ) {
-        return ResponseEntity.ok(userService.createUser(requestDto, auth));
+        return new ApiResponse<>(userService.createUser(requestDto, auth));
     }
 
     /**
      * 회원 정보 조회 (관리자)
      */
     @GetMapping("/{userId}")
-    public ResponseEntity<?> getUser(@PathVariable(name = "userId") Long userId, Authentication auth) {
-        return ResponseEntity.ok(userService.getUser(userId, auth));
+    public ApiResponse<GetUserResDto> getUser(@PathVariable(name = "userId") Long userId, Authentication auth) {
+        return new ApiResponse<>(userService.getUser(userId, auth));
     }
 
     /**
      * 회원 정보 조회 (본인)
      */
     @GetMapping("/me")
-    public ResponseEntity<?> getUser(Authentication auth) {
-        return ResponseEntity.ok(userService.getUser(auth));
+    public ApiResponse<GetUserResDto> getUser(Authentication auth) {
+        return new ApiResponse<>(userService.getUser(auth));
     }
 
     // 수정 -> 관리자
 
     // 삭제 -> 관리자
+
+    // 단일 회원 - 슬랙 계정 조회
+    @GetMapping("/{userId}/slack-account")
+    public ApiResponse<GetSlackAccountIdResDto> getSlackAccountId(@PathVariable(name = "userId") Long userId, Authentication auth) {
+        return new ApiResponse<>(userService.getSlackAccountId(userId));
+    }
 
 }

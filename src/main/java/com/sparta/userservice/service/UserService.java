@@ -1,18 +1,16 @@
 package com.sparta.userservice.service;
 
-import com.sparta.userservice.domain.DeliveryManager;
 import com.sparta.userservice.domain.User;
 import com.sparta.userservice.domain.UserStatus;
 import com.sparta.userservice.dto.request.ApproveUsersReqDto;
 import com.sparta.userservice.dto.request.CreateUserReqDto;
 import com.sparta.userservice.dto.request.RejectUsersReqDto;
 import com.sparta.userservice.dto.response.CreateUserResDto;
-import com.sparta.userservice.dto.response.DeliveryManagerDto;
+import com.sparta.userservice.dto.response.GetSlackAccountIdResDto;
 import com.sparta.userservice.dto.response.GetUserResDto;
 import com.sparta.userservice.dto.response.UpdateStatusResDto;
-import com.sparta.userservice.global.exception.AuthException;
+import com.sparta.userservice.global.exception.UserException;
 import com.sparta.userservice.global.security.jwt.user.UserDetailsImpl;
-import com.sparta.userservice.repository.DeliveryManagerRepository;
 import com.sparta.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +26,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.sparta.userservice.domain.DeliveryType.HUB_TO_VENDOR;
 import static com.sparta.userservice.domain.UserStatus.APPROVE;
 import static com.sparta.userservice.global.response.ErrorCode.*;
 
@@ -39,7 +36,6 @@ import static com.sparta.userservice.global.response.ErrorCode.*;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final DeliveryManagerRepository deliveryManagerRepository;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -86,39 +82,23 @@ public class UserService {
 
         // 4. 권한 확인
         UUID hubId = requestDto.getHubId();
+        UUID vendorId = requestDto.getVendorId();
         switch (user.getRole()) {
             case HUB_MANAGER -> {
-                requireHubId(requestDto);
+                requireAffiliationId(hubId);
                 user.assignHubId(hubId);
             }
             case VENDOR_MANAGER -> {
-                requireVendorId(requestDto);
-                user.assignVendorId(requestDto.getVendorId());
+                requireVendorId(vendorId);
+                user.assignVendorId(vendorId);
             }
             case DELIVERY_MANAGER -> {
-                requireDeliveryType(requestDto);
+                requireAffiliationId(hubId);
+                user.assignHubId(hubId);
                 user.assignAsDeliveryManager();
-
-                if (requestDto.getDeliveryType() == HUB_TO_VENDOR) {
-                    requireHubId(requestDto);
-                    user.assignHubId(hubId);
-                }
             }
         }
-
-        DeliveryManagerDto deliveryManagerDto = null;
-        if (user.getIsDeliveryManager()) {
-            DeliveryManager deliveryManager = deliveryManagerRepository.save(
-                    DeliveryManager.builder()
-                            .user(user)
-                            .type(requestDto.getDeliveryType())
-                            .hubId(user.getHubId())
-                            .build()
-            );
-            deliveryManagerDto = DeliveryManagerDto.from(deliveryManager);
-        }
-
-        return CreateUserResDto.from(user, deliveryManagerDto);
+        return CreateUserResDto.from(user);
     }
 
     /**
@@ -126,16 +106,7 @@ public class UserService {
      */
     @PreAuthorize("hasRole('MASTER')")
     public GetUserResDto getUser(Long userId, Authentication auth) {
-        User user = findUserById(userId);
-
-        DeliveryManagerDto deliveryManagerDto = deliveryManagerRepository.findById(user.getUserId())
-                .map(DeliveryManagerDto::from)
-                .orElseGet(() -> {
-                    log.warn("일치하는 배송 담당자 정보를 찾을 수 없음: userId={}", user.getUserId());
-                    return DeliveryManagerDto.empty();
-                });
-
-        return GetUserResDto.from(user, deliveryManagerDto);
+        return GetUserResDto.from(findUserById(userId));
     }
 
     /**
@@ -143,44 +114,42 @@ public class UserService {
      */
     public GetUserResDto getUser(Authentication auth) {
         UserDetailsImpl principal = (UserDetailsImpl) auth.getPrincipal();
-        User user = principal.getUser();
-        DeliveryManagerDto deliveryManagerDto = DeliveryManagerDto.from(principal.getDeliveryManager());
+        return GetUserResDto.from(principal.getUser());
+    }
 
-        return GetUserResDto.from(user, deliveryManagerDto);
+    /**
+     * 슬랙 아이디 조회 (요청 응답)
+     */
+    public GetSlackAccountIdResDto getSlackAccountId(Long userId) {
+        User user = findUserById(userId);
+        return new GetSlackAccountIdResDto(user.getSlackAccountId());
     }
 
     // ============================ 유틸 메서드 ============================
 
     private void validateUniqueUsername(String username) {
         if (userRepository.existsByUsername(username)) {
-            throw new AuthException(AUTH_DUPLICATED_USERNAME);
+            throw new UserException(USER_DUPLICATED_USERNAME);
         }
     }
 
     private void validateUniqueEmail(String email) {
         if (userRepository.existsByEmail(email)) {
-            throw new AuthException(AUTH_DUPLICATED_EMAIL);
+            throw new UserException(USER_DUPLICATED_EMAIL);
         }
     }
 
-    private void requireHubId(CreateUserReqDto requestDto) {
-        if (requestDto.getHubId() == null) {
+    private void requireAffiliationId(UUID hubId) {
+        if (hubId == null) {
             log.error("허브 아이디 누락");
-            throw new AuthException(AUTH_HUB_ID_REQUIRED);
+            throw new UserException(USER_HUB_ID_REQUIRED);
         }
     }
 
-    private void requireVendorId(CreateUserReqDto requestDto) {
-        if (requestDto.getVendorId() == null) {
+    private void requireVendorId(UUID vendorId) {
+        if (vendorId == null) {
             log.error("업체 아이디 누락");
-            throw new AuthException(AUTH_VENDOR_ID_REQUIRED);
-        }
-    }
-
-    private void requireDeliveryType(CreateUserReqDto requestDto) {
-        if (requestDto.getDeliveryType() == null) {
-            log.error("배달 담당자 유형 누락");
-            throw new AuthException(AUTH_DELIVERY_TYPE_REQUIRED);
+            throw new UserException(USER_VENDOR_ID_REQUIRED);
         }
     }
 
@@ -188,7 +157,7 @@ public class UserService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.error("회원을 찾을 수 없음: userId={}", userId);
-                    return new AuthException(AUTH_USER_NOT_FOUND);
+                    return new UserException(USER_NOT_FOUND);
                 });
     }
 
@@ -206,7 +175,7 @@ public class UserService {
         for (Long userId : distinctUserIds) {
             User user = users.get(userId);
             if (user == null) {
-                failed.add(new UpdateStatusResDto.Failure(userId, AUTH_USER_NOT_FOUND.getDetails()));
+                failed.add(new UpdateStatusResDto.Failure(userId, USER_NOT_FOUND.getDetails()));
                 continue;
             }
 
