@@ -5,10 +5,12 @@ import com.sparta.userservice.domain.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class CreateUserResDto {
@@ -20,9 +22,8 @@ public class CreateUserResDto {
     private String slackAccountId;
     private UUID hubId;
     private UUID vendorId;
-    private DeliveryManagerDto deliveryManagerDto;
 
-    public static CreateUserResDto from(User user, DeliveryManagerDto deliveryManagerDto) {
+    public static CreateUserResDto from(User user) {
         return CreateUserResDto.builder()
                 .username(user.getUsername())
                 .name(user.getName())
@@ -31,7 +32,6 @@ public class CreateUserResDto {
                 .slackAccountId(user.getSlackAccountId())
                 .hubId(user.getHubId())
                 .vendorId(user.getVendorId())
-                .deliveryManagerDto(deliveryManagerDto)
                 .build();
     }
 }

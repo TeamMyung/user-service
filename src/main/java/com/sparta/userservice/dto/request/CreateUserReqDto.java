@@ -1,16 +1,19 @@
 package com.sparta.userservice.dto.request;
 
-import com.sparta.userservice.domain.DeliveryType;
 import com.sparta.userservice.domain.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreateUserReqDto {
 
     @NotBlank(message = "아이디를 입력해주세요.")
@@ -42,5 +45,4 @@ public class CreateUserReqDto {
 
     private UUID hubId;
     private UUID vendorId;
-    private DeliveryType deliveryType;
 }

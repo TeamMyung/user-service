@@ -1,10 +1,10 @@
 package com.sparta.userservice.global.security.jwt.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sparta.userservice.domain.DeliveryManager;
 import com.sparta.userservice.domain.User;
 import com.sparta.userservice.dto.request.SignInReqDto;
-import com.sparta.userservice.global.exception.AuthException;
+import com.sparta.userservice.global.exception.UserException;
+import com.sparta.userservice.global.response.ErrorCode;
 import com.sparta.userservice.global.security.jwt.JwtProvider;
 import com.sparta.userservice.global.security.jwt.user.UserDetailsImpl;
 import com.sparta.userservice.service.TokenRedisService;
@@ -20,8 +20,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-
-import static com.sparta.userservice.global.response.ErrorCode.AUTH_INVALID_CREDENTIALS;
 
 @Slf4j
 @Component
@@ -66,9 +64,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             FilterChain chain, Authentication authResult
     ) {
         User user = ((UserDetailsImpl) authResult.getPrincipal()).getUser();
-        DeliveryManager deliveryManager = ((UserDetailsImpl) authResult.getPrincipal()).getDeliveryManager();
 
-        String access = jwtProvider.createAccessToken(user, deliveryManager);
+        String access = jwtProvider.createAccessToken(user);
         String refresh = jwtProvider.createRefreshToken(user.getUserId());
 
         tokenRedisService.saveRefresh(refresh);
@@ -82,6 +79,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) {
         log.error("아이디 또는 비밀번호가 일치하지 않음");
-        throw new AuthException(AUTH_INVALID_CREDENTIALS);
+        throw new UserException(ErrorCode.USER_INTERNAL_SERVER_ERROR);
     }
 }

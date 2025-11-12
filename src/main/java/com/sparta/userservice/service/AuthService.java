@@ -1,14 +1,12 @@
 package com.sparta.userservice.service;
 
-import com.sparta.userservice.domain.DeliveryManager;
 import com.sparta.userservice.domain.User;
 import com.sparta.userservice.dto.request.FindIdReqDto;
 import com.sparta.userservice.dto.request.FindPwReqDto;
 import com.sparta.userservice.dto.request.SignUpReqDto;
 import com.sparta.userservice.dto.response.FindIdResDto;
 import com.sparta.userservice.dto.response.FindPwResDto;
-import com.sparta.userservice.global.exception.AuthException;
-import com.sparta.userservice.repository.DeliveryManagerRepository;
+import com.sparta.userservice.global.exception.UserException;
 import com.sparta.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-import static com.sparta.userservice.domain.DeliveryType.HUB_TO_VENDOR;
 import static com.sparta.userservice.domain.UserStatus.PENDING;
 import static com.sparta.userservice.global.response.ErrorCode.*;
 
@@ -29,7 +26,6 @@ import static com.sparta.userservice.global.response.ErrorCode.*;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final DeliveryManagerRepository deliveryManagerRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -49,9 +45,10 @@ public class AuthService {
         // 3. 비밀번호 일치 여부 확인
         if (!requestDto.getPassword().equals(requestDto.getConfirmPassword())) {
             log.error("비밀번호가 일치하지 않음");
-            throw new AuthException(AUTH_PASSWORD_MISMATCH);
+            throw new UserException(USER_PASSWORD_MISMATCH);
         }
 
+        // 영속성 컨텍스트 저장
         User user = userRepository.save(User.builder()
                 .username(username)
                 .password(passwordEncoder.encode(requestDto.getPassword()))
@@ -63,8 +60,9 @@ public class AuthService {
                 .build()
         );
 
-        // 4. 권한 확인
+        // 4. 권한 확인 (더티 체킹)
         UUID hubId = requestDto.getHubId();
+        UUID vendorId = requestDto.getVendorId();
         switch (user.getRole()) {
             case HUB_MANAGER -> {
                 validateHubId(requestDto);
@@ -72,25 +70,12 @@ public class AuthService {
             }
             case VENDOR_MANAGER -> {
                 validateVendorId(requestDto);
-                user.assignVendorId(requestDto.getVendorId());
+                user.assignHubId(vendorId);
             }
             case DELIVERY_MANAGER -> {
-                validateDeliveryType(requestDto);
-
+                validateHubId(requestDto);
+                user.assignHubId(hubId);
                 user.assignAsDeliveryManager();
-                DeliveryManager deliveryManager = deliveryManagerRepository.save(
-                        DeliveryManager.builder()
-                                .user(user)
-                                .type(requestDto.getDeliveryType())
-                                .build()
-                );
-
-                if (deliveryManager.getType() == HUB_TO_VENDOR) {
-                    validateHubId(requestDto);
-
-                    user.assignHubId(hubId);
-                    deliveryManager.assignHubId(hubId);
-                }
             }
         }
     }
@@ -100,13 +85,13 @@ public class AuthService {
         User user = userRepository.findUserByEmail(email)
                 .orElseThrow(() -> {
                     log.error("이메일이 일치하는 회원 없음: email={}", email);
-                    return new AuthException(AUTH_USER_NOT_FOUND);
+                    return new UserException(USER_NOT_FOUND);
                 });
 
         String name = requestDto.getName();
         if (!user.getName().equals(name)) {
             log.error("회원 정보가 일치하지 않음: name={}", name);
-            throw new AuthException(AUTH_USER_DATA_MISMATCH);
+            throw new UserException(USER_DATA_MISMATCH);
         }
 
         return new FindIdResDto(user.getUsername());
@@ -118,14 +103,14 @@ public class AuthService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     log.error("아이디가 일치하는 회원 없음: username={}", username);
-                    throw new AuthException(AUTH_USER_NOT_FOUND);
+                    throw new UserException(USER_NOT_FOUND);
                 });
 
         String name = requestDto.getName();
         String email = requestDto.getEmail();
         if (!user.getName().equals(name) || !user.getEmail().equals(email)) {
             log.error("회원 정보가 일치하지 않음: name={}, email={}", name, user.getEmail());
-            throw new AuthException(AUTH_USER_DATA_MISMATCH);
+            throw new UserException(USER_DATA_MISMATCH);
         }
 
         String tempPassword = generateTempPassword();
@@ -138,34 +123,27 @@ public class AuthService {
 
     private void validateUniqueUsername(String username) {
         if (userRepository.existsByUsername(username)) {
-            throw new AuthException(AUTH_DUPLICATED_USERNAME);
+            throw new UserException(USER_DUPLICATED_USERNAME);
         }
     }
 
     private void validateUniqueEmail(String email) {
         if (userRepository.existsByEmail(email)) {
-            throw new AuthException(AUTH_DUPLICATED_EMAIL);
+            throw new UserException(USER_DUPLICATED_EMAIL);
         }
     }
 
     private void validateHubId(SignUpReqDto requestDto) {
         if (requestDto.getHubId() == null) {
             log.error("허브 아이디 누락");
-            throw new AuthException(AUTH_HUB_ID_REQUIRED);
+            throw new UserException(USER_HUB_ID_REQUIRED);
         }
     }
 
     private void validateVendorId(SignUpReqDto requestDto) {
         if (requestDto.getVendorId() == null) {
             log.error("업체 아이디 누락");
-            throw new AuthException(AUTH_VENDOR_ID_REQUIRED);
-        }
-    }
-
-    private void validateDeliveryType(SignUpReqDto requestDto) {
-        if (requestDto.getDeliveryType() == null) {
-            log.error("배달 담당자 유형 누락");
-            throw new AuthException(AUTH_DELIVERY_TYPE_REQUIRED);
+            throw new UserException(USER_VENDOR_ID_REQUIRED);
         }
     }
 

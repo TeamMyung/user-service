@@ -3,14 +3,15 @@ package com.sparta.userservice.dto.response;
 import com.sparta.userservice.domain.User;
 import com.sparta.userservice.domain.UserRole;
 import com.sparta.userservice.domain.UserStatus;
-import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class GetUserResDto {
@@ -24,9 +25,8 @@ public class GetUserResDto {
     private String slackAccountId;
     private UUID hubId;
     private UUID vendorId;
-    private DeliveryManagerDto deliveryManagerDto;
 
-    public static GetUserResDto from(User user, @Nullable DeliveryManagerDto deliveryManager) {
+    public static GetUserResDto from(User user) {
         return GetUserResDto.builder()
                 .userId(user.getUserId())
                 .username(user.getUsername())
@@ -37,7 +37,6 @@ public class GetUserResDto {
                 .slackAccountId(user.getSlackAccountId())
                 .hubId(user.getHubId())
                 .vendorId(user.getVendorId())
-                .deliveryManagerDto(deliveryManager)
                 .build();
 
     }
