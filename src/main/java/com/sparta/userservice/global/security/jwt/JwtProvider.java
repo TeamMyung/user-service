@@ -25,11 +25,11 @@ public class JwtProvider {
     private final Duration ACCESS_TOKEN_VALIDITY_DURATION = Duration.ofMinutes(15);
     private final Duration REFRESH_TOKEN_VALIDITY_DURATION = Duration.ofDays(14);
 
-    public static final String CLAIM_USERNAME = "username";
-    public static final String CLAIM_ROLE = "role";
-    public static final String CLAIM_HUB_ID = "hub_id";
-    public static final String CLAIM_VENDOR_ID = "vendor_id";
-    public static final String TOKEN_TYPE = "token_type";
+    public static final String CLAIM_USERNAME = "x-username";
+    public static final String CLAIM_ROLE = "x-role";
+    public static final String CLAIM_HUB_ID = "x-hub-d";
+    public static final String CLAIM_VENDOR_ID = "x-vendor-id";
+    public static final String TOKEN_TYPE = "x-token-type";
     public static final String TOKEN_ACCESS = "access";
     public static final String TOKEN_REFRESH = "refresh";
 
